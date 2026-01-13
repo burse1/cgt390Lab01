@@ -9,5 +9,5 @@ export default defineConfig({
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
-  ],base: '/profile-app/',
+  ],base: '/cgt390Lab01/',
 })
