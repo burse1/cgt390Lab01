@@ -11,3 +11,4 @@ export default defineConfig({
     }),
   ],base: '/cgt390Lab01/',
 })
+//okay//
