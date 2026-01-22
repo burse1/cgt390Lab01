@@ -1,7 +1,7 @@
 export default function Introduction() {
   const name = "Spencer";
   const bio = "I’m a CGT student exploring React components and JSX.";
-  const emailUser = "burse1"; // change if needed
+  const emailUser = "burse";
 
   return (
     <section className="intro">
