@@ -143,3 +143,59 @@ button:focus-visible {
   margin: 0;
   opacity: 0.85;
 }
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.section {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+}
+
+.section__title {
+  margin: 0 0 12px 0;
+}
+
+.cards__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+}
+
+.card--featured {
+  border-width: 2px;
+}
+
+.card__title {
+  margin: 0 0 10px 0;
+}
+
+.card__meta {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+}
+
+.card__badge {
+  margin: 10px 0 0 0;
+  font-weight: 600;
+}
