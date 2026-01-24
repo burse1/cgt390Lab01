@@ -1,7 +1,7 @@
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
-import Section from "./components/section";
+import Section from "./components/Section";
 
 export default function App() {
   // Parent holds the data (at least 2)
