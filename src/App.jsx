@@ -3,9 +3,11 @@ import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/section";
+import p1 from "./assets/p1.jpg";
+import p2 from "./assets/p2.jpg";
 
 export default function App() {
-  
+
   const profiles = [
   
     {
@@ -14,7 +16,7 @@ export default function App() {
       role: "Developer",
       year: "Junior",
       major: "CGT",
-      image: "/images/p1.jpg",
+      image: p1,
       isFeatured: true,
     },
     {
@@ -23,7 +25,7 @@ export default function App() {
       role: "Designer",
       year: "Sophomore",
       major: "Web Dev",
-      image: "/images/p2.jpg",
+      image: p1,
       isFeatured: false,
     },
 
@@ -34,7 +36,7 @@ export default function App() {
       role: "Developer",
       year: "Senior",
       major: "CGT",
-      image: "/images/p1.jpg",
+      image: p2,
       isFeatured: false,
     },
     {
@@ -43,7 +45,7 @@ export default function App() {
       role: "Project Manager",
       year: "Junior",
       major: "UX",
-      image: "/images/p2.jpg",
+      image: p1,
       isFeatured: false,
     },
     {
@@ -52,7 +54,7 @@ export default function App() {
       role: "Designer",
       year: "Freshman",
       major: "Visual Comm",
-      image: "/images/p1.jpg",
+      image: p1,
       isFeatured: false,
     },
     {
@@ -61,7 +63,7 @@ export default function App() {
       role: "Researcher",
       year: "Senior",
       major: "HCI",
-      image: "/images/p2.jpg",
+      image: p2,
       isFeatured: true,
     },
     {
@@ -70,7 +72,7 @@ export default function App() {
       role: "Developer",
       year: "Sophomore",
       major: "CS",
-      image: "/images/p1.jpg",
+      image: p1,
       isFeatured: false,
     },
     {
@@ -79,7 +81,7 @@ export default function App() {
       role: "Designer",
       year: "Junior",
       major: "CGT",
-      image: "/images/p2.jpg",
+      image: p2,
       isFeatured: false,
     },
     {
@@ -88,7 +90,7 @@ export default function App() {
       role: "Researcher",
       year: "Sophomore",
       major: "Data Viz",
-      image: "/images/p1.jpg",
+      image: p1,
       isFeatured: false,
     },
     {
@@ -97,7 +99,7 @@ export default function App() {
       role: "Project Manager",
       year: "Senior",
       major: "Management",
-      image: "/images/p2.jpg",
+      image: p2,
       isFeatured: false,
     },
   ];

@@ -223,14 +223,16 @@ button:focus-visible {
   border: 1px solid #ddd;
   border-radius: 12px;
   font: inherit;
+  color:black;
 }
 
 .filters__reset {
   padding: 10px 14px;
-  border: 1px solid #ddd;
+  border: 1px solid #000000;
   border-radius: 12px;
   background: white;
   cursor: pointer;
+  color: black;
 }
 
 .filters__reset:hover {
