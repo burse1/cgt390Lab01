@@ -1,16 +1,27 @@
-export default function Card({ name, year, major, isFeatured }) {
+export default function Card({ id, name, role, image, year, major, isFeatured }) {
   const cardClass = isFeatured ? "card card--featured" : "card";
 
   return (
     <article className={cardClass}>
-      <h3 className="card__title">{name}</h3>
+      <div className="card__imgWrap">
+        <img className="card__img" src={image} alt={`${name} profile`} />
+      </div>
 
-      <p className="card__meta">
-        <span className="pill">{year}</span>
-        <span className="pill">{major}</span>
-      </p>
+      <div className="card__content">
+        <div className="card__topRow">
+          <h3 className="card__title">{name}</h3>
+          <span className="card__id">#{id}</span>
+        </div>
 
-      {isFeatured && <p className="card__badge">Featured</p>}
+        <p className="card__role">{role}</p>
+
+        <p className="card__meta">
+          <span className="pill">{year}</span>
+          <span className="pill">{major}</span>
+        </p>
+
+        {isFeatured && <p className="card__badge">Featured</p>}
+      </div>
     </article>
   );
 }
