@@ -1,15 +1,23 @@
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/section";
+
+// image imports (recommended)
 import p1 from "./assets/p1.jpg";
 import p2 from "./assets/p2.jpg";
 
 export default function App() {
+  // 🔥 MODE STATE
+  const [mode, setMode] = useState("light");
+
+  const toggleMode = () => {
+    setMode((m) => (m === "light" ? "dark" : "light"));
+  };
 
   const profiles = [
-  
+    
     {
       id: 1,
       name: "Spencer Burse",
@@ -104,89 +112,25 @@ export default function App() {
     },
   ];
 
-  //state
-  const [roleFilter, setRoleFilter] = useState("All");
-  const [search, setSearch] = useState("");
-
-  // dropdown options from data
-  const roleOptions = useMemo(() => {
-    const roles = Array.from(new Set(profiles.map((p) => p.role)));
-    roles.sort();
-    return ["All", ...roles];
-  }, [profiles]);
-
-  // filtered results
-  const visibleProfiles = useMemo(() => {
-    const s = search.trim().toLowerCase();
-
-    return profiles.filter((p) => {
-      const matchesRole = roleFilter === "All" ? true : p.role === roleFilter;
-      const matchesSearch = s === "" ? true : p.name.toLowerCase().includes(s);
-      return matchesRole && matchesSearch;
-    });
-  }, [profiles, roleFilter, search]);
-
-  const handleReset = () => {
-    setRoleFilter("All");
-    setSearch("");
-  };
 
   return (
-    <div className="page">
-      <Header />
+    <div className={`page ${mode}`}>
+      {/* CONDITIONAL RENDERING */}
+      <Header mode={mode} />
+
+      <button onClick={toggleMode} className="modeToggle">
+        Switch to {mode === "light" ? "Dark" : "Light"} Mode
+      </button>
+
       <Introduction />
 
       <Section title="Profiles">
-        {/* FILTER BAR */}
-        <div className="filters">
-          <label className="filters__item">
-            <span className="filters__label">Filter by role</span>
-            <select
-              className="filters__control"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="filters__item">
-            <span className="filters__label">Search by name</span>
-            <input
-              className="filters__control"
-              type="text"
-              placeholder="Type a name…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </label>
-
-          <button className="filters__reset" onClick={handleReset}>
-            Reset
-          </button>
-        </div>
-
-        <p className="results">
-          Showing <strong>{visibleProfiles.length}</strong> of{" "}
-          <strong>{profiles.length}</strong>
-        </p>
-
-        {/* CARDS */}
         <div className="cards__grid">
-          {visibleProfiles.map((p) => (
+          {profiles.map((p) => (
             <Card
               key={p.id}
-              id={p.id}
-              name={p.name}
-              role={p.role}
-              year={p.year}
-              major={p.major}
-              image={p.image}
-              isFeatured={p.isFeatured}
+              {...p}
+              mode={mode} 
             />
           ))}
         </div>

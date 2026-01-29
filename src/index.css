@@ -297,3 +297,10 @@ button:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+.modeToggle {
+  margin: 12px 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
