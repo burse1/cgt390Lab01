@@ -1,23 +1,24 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/section";
 
-// image imports (recommended)
+// imgs
 import p1 from "./assets/p1.jpg";
 import p2 from "./assets/p2.jpg";
 
 export default function App() {
-  // 🔥 MODE STATE
+  // lab 6: mode state
   const [mode, setMode] = useState("light");
+  const toggleMode = () => setMode((m) => (m === "light" ? "dark" : "light"));
 
-  const toggleMode = () => {
-    setMode((m) => (m === "light" ? "dark" : "light"));
-  };
+  //lab 5: filter + search state
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [search, setSearch] = useState("");
 
+  // parent
   const profiles = [
-    
     {
       id: 1,
       name: "Spencer Burse",
@@ -110,28 +111,89 @@ export default function App() {
       image: p2,
       isFeatured: false,
     },
+  
+    
   ];
 
+  // dropdown options (dynamic)
+  const roleOptions = useMemo(() => {
+    const roles = Array.from(new Set(profiles.map((p) => p.role)));
+    roles.sort();
+    return ["All", ...roles];
+  }, [profiles]);
+
+  // filtered results
+  const visibleProfiles = useMemo(() => {
+    const s = search.trim().toLowerCase();
+
+    return profiles.filter((p) => {
+      const matchesRole = roleFilter === "All" ? true : p.role === roleFilter;
+      const matchesSearch = s === "" ? true : p.name.toLowerCase().includes(s);
+      return matchesRole && matchesSearch;
+    });
+  }, [profiles, roleFilter, search]);
+
+  const handleReset = () => {
+    setRoleFilter("All");
+    setSearch("");
+  };
 
   return (
     <div className={`page ${mode}`}>
-      {/* CONDITIONAL RENDERING */}
+
+      {/* lab 6: conditional rendering in Header */}
       <Header mode={mode} />
 
-      <button onClick={toggleMode} className="modeToggle">
+      {/* lab 6: mode toggle button */}
+      <button className="modeToggle" onClick={toggleMode}>
         Switch to {mode === "light" ? "Dark" : "Light"} Mode
       </button>
 
       <Introduction />
 
       <Section title="Profiles">
-        <div className="cards__grid">
-          {profiles.map((p) => (
-            <Card
-              key={p.id}
-              {...p}
-              mode={mode} 
+        {/*lab 5 filters */}
+        <div className="filters">
+          <label className="filters__item">
+            <span className="filters__label">Filter by role</span>
+            <select
+              className="filters__control"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              {roleOptions.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="filters__item">
+            <span className="filters__label">Search by name</span>
+            <input
+              className="filters__control"
+              type="text"
+              placeholder="Type a name…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
+          </label>
+
+          <button className="filters__reset" onClick={handleReset}>
+            Reset
+          </button>
+        </div>
+
+        <p className="results">
+          Showing <strong>{visibleProfiles.length}</strong> of{" "}
+          <strong>{profiles.length}</strong>
+        </p>
+
+        {/* cards rendered with map + props */}
+        <div className="cards__grid">
+          {visibleProfiles.map((p) => (
+            <Card key={p.id} {...p} mode={mode} />
           ))}
         </div>
       </Section>

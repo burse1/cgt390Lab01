@@ -1,77 +1,86 @@
-:root {
+/* ---------- RESET / BASE ---------- */
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: transparent;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ---------- LINKS ---------- */
 
 a {
   font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+/* ---------- TYPOGRAPHY ---------- */
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
 
+/* ---------- BUTTONS ---------- */
+
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid #ccc;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+
+/* ---------- PAGE LAYOUT ---------- */
+
+.page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 24px;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* keep the content readable */
+.page > * {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
 }
-.page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+
+
+/* LIGHT MODE */
+.page.light {
+  background-color: #f7f7f8;
+  color: #111;
 }
+
+/* DARK MODE */
+.page.dark {
+  background-color: #0f0f12;
+  color: #f5f5f5;
+}
+
+/* ---------- HEADER ---------- */
 
 .header {
   padding: 18px 20px;
@@ -99,6 +108,8 @@ button:focus-visible {
   opacity: 0.8;
 }
 
+/* ---------- INTRO ---------- */
+
 .intro {
   padding: 18px 20px;
   border: 1px solid #ddd;
@@ -110,45 +121,7 @@ button:focus-visible {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.cards__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.card {
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 14px;
-}
-
-.card--featured {
-  border-width: 2px;
-}
-
-.card__tag {
-  display: inline-block;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  margin-bottom: 10px;
-}
-
-.card__title {
-  margin: 0 0 8px 0;
-}
-
-.card__desc {
-  margin: 0;
-  opacity: 0.85;
-}
-.page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
+/* ---------- SECTION ---------- */
 
 .section {
   margin-top: 18px;
@@ -157,49 +130,16 @@ button:focus-visible {
   border-radius: 14px;
 }
 
-.section__title {
-  margin: 0 0 12px 0;
+.page.light .section {
+  background: #ffffff;
 }
 
-.cards__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+.page.dark .section {
+  background: #16161b;
 }
 
-.card {
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 14px;
-}
+/* ---------- FILTERS ---------- */
 
-.card--featured {
-  border-width: 2px;
-}
-
-.card__title {
-  margin: 0 0 10px 0;
-}
-
-.card__meta {
-  display: flex;
-  gap: 8px;
-  margin: 0;
-  flex-wrap: wrap;
-}
-
-.pill {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-}
-
-.card__badge {
-  margin: 10px 0 0 0;
-  font-weight: 600;
-}
-/* --- Filters --- */
 .filters {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
@@ -223,16 +163,17 @@ button:focus-visible {
   border: 1px solid #ddd;
   border-radius: 12px;
   font: inherit;
-  color:black;
+  color: inherit;
+  background: transparent;
 }
 
 .filters__reset {
   padding: 10px 14px;
-  border: 1px solid #000000;
+  border: 1px solid #000;
   border-radius: 12px;
   background: white;
-  cursor: pointer;
   color: black;
+  cursor: pointer;
 }
 
 .filters__reset:hover {
@@ -244,63 +185,54 @@ button:focus-visible {
   opacity: 0.85;
 }
 
-/* --- Profile Card visuals --- */
-.card {
-  overflow: hidden;
-}
+/* ---------- MODE TOGGLE ---------- */
 
-.card__imgWrap {
-  width: 100%;
-  height: 170px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #ddd;
-  margin-bottom: 12px;
-}
-
-.card__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.card__content {
-  display: grid;
-  gap: 8px;
-}
-
-.card__topRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.card__id {
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-.card__role {
-  margin: 0;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-/* make layout responsive */
-@media (max-width: 720px) {
-  .filters {
-    grid-template-columns: 1fr;
-  }
-  .cards__grid {
-    grid-template-columns: 1fr;
-  }
-}
 .modeToggle {
   margin: 12px 0;
   padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid #ccc;
+  background: white;
   cursor: pointer;
+}
+
+/* ---------- CARDS GRID ---------- */
+
+.cards__grid {
+  display: grid;
+  gap: 14px;
+
+  
+  grid-template-columns: repeat(auto-fit, minmax(260px, 340px));
+  justify-content: center;
+}
+
+
+/* ---------- FORM COLORS PER MODE ---------- */
+
+.page.dark input,
+.page.dark select,
+.page.dark button {
+  background: #1e1e24;
+  color: #f5f5f5;
+  border-color: #333;
+}
+
+.page.light input,
+.page.light select,
+.page.light button {
+  background: #ffffff;
+  color: #111;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 720px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .cards__grid {
+    grid-template-columns: 1fr;
+  }
 }
