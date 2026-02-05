@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/section";
+import AddProfileForm from "./components/AddProfileForm";
 
 // imgs
 import p1 from "./assets/p1.jpg";
@@ -16,9 +17,14 @@ export default function App() {
   //lab 5: filter + search state
   const [roleFilter, setRoleFilter] = useState("All");
   const [search, setSearch] = useState("");
+  //lab 7
+  const handleAddProfile = (newProfile) => {
+  setProfiles((prev) => [...prev, newProfile]);
+ 
+};
 
   // parent
-  const profiles = [
+  const [profiles,setProfiles] = useState([
     {
       id: 1,
       name: "Spencer Burse",
@@ -112,8 +118,8 @@ export default function App() {
       isFeatured: false,
     },
   
-    
-  ];
+  
+  ]);
 
   // dropdown options (dynamic)
   const roleOptions = useMemo(() => {
@@ -150,7 +156,7 @@ export default function App() {
       </button>
 
       <Introduction />
-
+      <AddProfileForm existingProfiles={profiles} onAddProfile={handleAddProfile} />
       <Section title="Profiles">
         {/*lab 5 filters */}
         <div className="filters">
