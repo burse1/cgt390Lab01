@@ -1,0 +1,175 @@
+import { useEffect, useMemo, useState } from "react";
+import Card from "./Card";
+import Section from "./section";
+
+export default function FetchedProfiles({ mode }) {
+  const [titles, setTitles] = useState(["All"]);
+  const [titleFilter, setTitleFilter] = useState("All");
+  const [nameSearch, setNameSearch] = useState("");
+
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const [rows, setRows] = useState([]);
+  const [loadingTitles, setLoadingTitles] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [error, setError] = useState("");
+
+  // --- Fetch titles once on mount ---
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        setLoadingTitles(true);
+        setError("");
+
+        const res = await fetch(
+          "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php",
+          { signal: controller.signal }
+        );
+        if (!res.ok) throw new Error("Failed to load titles");
+        const data = await res.json();
+
+        const cleanTitles = Array.isArray(data.titles) ? data.titles : [];
+        const deduped = Array.from(new Set(cleanTitles.map((t) => String(t).trim()))).filter(Boolean);
+        deduped.sort((a, b) => a.localeCompare(b));
+
+        setTitles(["All", ...deduped]);
+      } catch (e) {
+        if (e.name !== "AbortError") setError("Could not load titles.");
+      } finally {
+        setLoadingTitles(false);
+      }
+    };
+
+    run();
+    return () => controller.abort();
+  }, []);
+
+  // reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [titleFilter, nameSearch]);
+
+  // --- Fetch filtered data whenever filters/page change ---
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const run = async () => {
+      try {
+        setLoadingData(true);
+        setError("");
+
+        const titleParam = titleFilter === "All" ? "" : titleFilter;
+        const nameParam = nameSearch.trim();
+
+        const url =
+          "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php" +
+          `?title=${encodeURIComponent(titleParam)}` +
+          `&name=${encodeURIComponent(nameParam)}` +
+          `&page=${encodeURIComponent(page)}` +
+          `&limit=${encodeURIComponent(limit)}`;
+
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error("Failed to load profiles");
+        const data = await res.json();
+
+        // API could return an array or an object wrapper; handle both safely
+        const list = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+        setRows(list);
+      } catch (e) {
+        if (e.name !== "AbortError") setError("Could not load profiles.");
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    run();
+    return () => controller.abort();
+  }, [titleFilter, nameSearch, page]);
+
+  const canGoPrev = page > 1;
+  const canGoNext = rows.length === limit; // simple heuristic if API doesn't return total count
+
+  const mappedCards = useMemo(() => {
+    return rows.map((r) => ({
+      id: Number(r.id) || r.id,
+      name: r.name ?? "Unnamed",
+      role: r.title ?? "Untitled",
+      // show the real uploaded URL from API
+      image: r.image_url,
+      // optional fields (Card will conditionally show if you add it)
+      bio: r.bio ?? "",
+      email: r.email ?? "",
+      year: "API",
+      major: "Fetched",
+      isFeatured: false,
+    }));
+  }, [rows]);
+
+  return (
+    <Section title="Fetched Profiles (Lab 8)">
+      <div className="filters">
+        <label className="filters__item">
+          <span className="filters__label">Filter by title (API)</span>
+          <select
+            className="filters__control"
+            value={titleFilter}
+            onChange={(e) => setTitleFilter(e.target.value)}
+            disabled={loadingTitles}
+          >
+            {titles.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="filters__item">
+          <span className="filters__label">Search by name (API)</span>
+          <input
+            className="filters__control"
+            type="text"
+            placeholder="Type a name…"
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+          />
+        </label>
+
+        <button
+          className="filters__reset"
+          type="button"
+          onClick={() => {
+            setTitleFilter("All");
+            setNameSearch("");
+            setPage(1);
+          }}
+        >
+          Reset
+        </button>
+      </div>
+
+      <div className="pager">
+        <button type="button" onClick={() => setPage((p) => p - 1)} disabled={!canGoPrev || loadingData}>
+          Prev
+        </button>
+        <span className="pager__text">Page {page}</span>
+        <button type="button" onClick={() => setPage((p) => p + 1)} disabled={!canGoNext || loadingData}>
+          Next
+        </button>
+      </div>
+
+      {error && <p className="apiError">{error}</p>}
+      {loadingData && <p className="apiHint">Loading…</p>}
+      {!loadingData && !error && mappedCards.length === 0 && <p className="apiHint">No results.</p>}
+
+      <div className="cards__grid">
+        {mappedCards.map((p) => (
+          <Card key={p.id} {...p} mode={mode} />
+        ))}
+      </div>
+    </Section>
+  );
+}

@@ -4,6 +4,7 @@ import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/section";
 import AddProfileForm from "./components/AddProfileForm";
+import FetchedProfiles from "./components/FetchedProfiles";
 
 // imgs
 import p1 from "./assets/p1.jpg";
@@ -156,6 +157,7 @@ export default function App() {
       </button>
 
       <Introduction />
+      <FetchedProfiles mode={mode} />
       <AddProfileForm existingProfiles={profiles} onAddProfile={handleAddProfile} />
       <Section title="Profiles">
         {/*lab 5 filters */}
