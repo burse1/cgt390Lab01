@@ -31,10 +31,13 @@ export default function FetchedProfiles({ mode }) {
         if (!res.ok) throw new Error("Failed to load titles");
         const data = await res.json();
 
-        const cleanTitles = Array.isArray(data.titles) ? data.titles : [];
-        const deduped = Array.from(new Set(cleanTitles.map((t) => String(t).trim()))).filter(Boolean);
-        deduped.sort((a, b) => a.localeCompare(b));
+        // IMPORTANT: do NOT trim titles (API may contain trailing spaces like "Designer ")
+        const rawTitles = Array.isArray(data.titles) ? data.titles : [];
+        const deduped = Array.from(new Set(rawTitles.map((t) => String(t)))).filter(
+          (t) => t.length > 0
+        );
 
+        deduped.sort((a, b) => a.localeCompare(b));
         setTitles(["All", ...deduped]);
       } catch (e) {
         if (e.name !== "AbortError") setError("Could not load titles.");
@@ -52,7 +55,7 @@ export default function FetchedProfiles({ mode }) {
     setPage(1);
   }, [titleFilter, nameSearch]);
 
-  // --- Fetch filtered data whenever filters/page change ---
+  // --- Fetch data whenever filters/page change ---
   useEffect(() => {
     const controller = new AbortController();
 
@@ -61,22 +64,62 @@ export default function FetchedProfiles({ mode }) {
         setLoadingData(true);
         setError("");
 
-        const titleParam = titleFilter === "All" ? "" : titleFilter;
         const nameParam = nameSearch.trim();
 
-        const url =
-          "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php" +
-          `?title=${encodeURIComponent(titleParam)}` +
-          `&name=${encodeURIComponent(nameParam)}` +
-          `&page=${encodeURIComponent(page)}` +
-          `&limit=${encodeURIComponent(limit)}`;
+        const useFetchAll = titleFilter === "All" && nameParam === "";
 
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error("Failed to load profiles");
-        const data = await res.json();
+        if (useFetchAll) {
+          const url = "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data.php";
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) throw new Error("Failed to load profiles");
+          const data = await res.json();
 
-        // API could return an array or an object wrapper; handle both safely
-        const list = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+          const arr = Array.isArray(data) ? data : [];
+          const start = (page - 1) * limit;
+          setRows(arr.slice(start, start + limit));
+          return;
+        }
+
+        // Otherwise use the filtered endpoint
+        const base =
+          "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php";
+
+        const tryFetch = async (titleValue) => {
+          const url =
+            base +
+            `?title=${encodeURIComponent(titleValue)}` +
+            `&name=${encodeURIComponent(nameParam)}` +
+            `&page=${encodeURIComponent(page)}` +
+            `&limit=${encodeURIComponent(limit)}`;
+
+          const res = await fetch(url, { signal: controller.signal });
+          if (!res.ok) throw new Error("Failed to load profiles");
+          const data = await res.json();
+
+          const list = Array.isArray(data)
+  ? data
+  : Array.isArray(data.profiles)
+  ? data.profiles
+  : Array.isArray(data.data)
+  ? data.data
+  : [];
+
+
+          return list;
+        };
+
+    
+        const titleCandidates =
+          titleFilter === "All"
+            ? ["All", ""]
+            : [titleFilter, titleFilter.trim()];
+
+        let list = [];
+        for (const t of titleCandidates) {
+          list = await tryFetch(t);
+          if (list.length > 0) break;
+        }
+
         setRows(list);
       } catch (e) {
         if (e.name !== "AbortError") setError("Could not load profiles.");
@@ -90,16 +133,14 @@ export default function FetchedProfiles({ mode }) {
   }, [titleFilter, nameSearch, page]);
 
   const canGoPrev = page > 1;
-  const canGoNext = rows.length === limit; // simple heuristic if API doesn't return total count
+  const canGoNext = rows.length === limit; // heuristic
 
   const mappedCards = useMemo(() => {
     return rows.map((r) => ({
       id: Number(r.id) || r.id,
       name: r.name ?? "Unnamed",
       role: r.title ?? "Untitled",
-      // show the real uploaded URL from API
       image: r.image_url,
-      // optional fields (Card will conditionally show if you add it)
       bio: r.bio ?? "",
       email: r.email ?? "",
       year: "API",
@@ -152,18 +193,28 @@ export default function FetchedProfiles({ mode }) {
       </div>
 
       <div className="pager">
-        <button type="button" onClick={() => setPage((p) => p - 1)} disabled={!canGoPrev || loadingData}>
+        <button
+          type="button"
+          onClick={() => setPage((p) => p - 1)}
+          disabled={!canGoPrev || loadingData}
+        >
           Prev
         </button>
         <span className="pager__text">Page {page}</span>
-        <button type="button" onClick={() => setPage((p) => p + 1)} disabled={!canGoNext || loadingData}>
+        <button
+          type="button"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={!canGoNext || loadingData}
+        >
           Next
         </button>
       </div>
 
       {error && <p className="apiError">{error}</p>}
       {loadingData && <p className="apiHint">Loading…</p>}
-      {!loadingData && !error && mappedCards.length === 0 && <p className="apiHint">No results.</p>}
+      {!loadingData && !error && mappedCards.length === 0 && (
+        <p className="apiHint">No results.</p>
+      )}
 
       <div className="cards__grid">
         {mappedCards.map((p) => (
