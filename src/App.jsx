@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
-import Header from "./components/Header";
-import Introduction from "./components/Introduction";
-import Card from "./components/Card";
-import Section from "./components/section";
-import AddProfileForm from "./components/AddProfileForm";
-import FetchedProfiles from "./components/FetchedProfiles";
+import { Routes, Route } from "react-router-dom";
+
+// Layout / Nav
+import Nav from "./components/Nav";
+
+// Pages
+import HomePage from "./pages/HomePage";
+import AddProfilePage from "./pages/AddProfilePage";
+import OtherProfilesPage from "./pages/OtherProfilesPage";
+import AboutPage from "./pages/AboutPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 // imgs
 import p1 from "./assets/p1.jpg";
@@ -15,17 +20,8 @@ export default function App() {
   const [mode, setMode] = useState("light");
   const toggleMode = () => setMode((m) => (m === "light" ? "dark" : "light"));
 
-  //lab 5: filter + search state
-  const [roleFilter, setRoleFilter] = useState("All");
-  const [search, setSearch] = useState("");
-  //lab 7
-  const handleAddProfile = (newProfile) => {
-  setProfiles((prev) => [...prev, newProfile]);
- 
-};
-
-  // parent
-  const [profiles,setProfiles] = useState([
+  // parent profiles (local)
+  const [profiles, setProfiles] = useState([
     {
       id: 1,
       name: "Spencer Burse",
@@ -44,8 +40,6 @@ export default function App() {
       image: p1,
       isFeatured: false,
     },
-
-   
     {
       id: 3,
       name: "Maya Chen",
@@ -118,9 +112,16 @@ export default function App() {
       image: p2,
       isFeatured: false,
     },
-  
-  
   ]);
+
+  // lab 5: filter + search state (local list page)
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [search, setSearch] = useState("");
+
+  // lab 7: add profile handler (used by AddProfileForm on /add)
+  const handleAddProfile = (newProfile) => {
+    setProfiles((prev) => [...prev, newProfile]);
+  };
 
   // dropdown options (dynamic)
   const roleOptions = useMemo(() => {
@@ -129,7 +130,7 @@ export default function App() {
     return ["All", ...roles];
   }, [profiles]);
 
-  // filtered results
+  // filtered results for local profiles page
   const visibleProfiles = useMemo(() => {
     const s = search.trim().toLowerCase();
 
@@ -147,64 +148,64 @@ export default function App() {
 
   return (
     <div className={`page ${mode}`}>
+      {/* Nav always visible */}
+      <Nav mode={mode} />
 
-      {/* lab 6: conditional rendering in Header */}
-      <Header mode={mode} />
-
-      {/* lab 6: mode toggle button */}
+      {/* Mode toggle always visible */}
       <button className="modeToggle" onClick={toggleMode}>
         Switch to {mode === "light" ? "Dark" : "Light"} Mode
       </button>
 
-      <Introduction />
-      <FetchedProfiles mode={mode} />
-      <AddProfileForm existingProfiles={profiles} onAddProfile={handleAddProfile} />
-      <Section title="Profiles">
-        {/*lab 5 filters */}
-        <div className="filters">
-          <label className="filters__item">
-            <span className="filters__label">Filter by role</span>
-            <select
-              className="filters__control"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              {roleOptions.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="filters__item">
-            <span className="filters__label">Search by name</span>
-            <input
-              className="filters__control"
-              type="text"
-              placeholder="Type a name…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+      {/* Routes */}
+      <Routes>
+        {/* Home */}
+        <Route
+          path="/"
+          element={
+            <HomePage
+              mode={mode}
+              profiles={profiles}
+              visibleProfiles={visibleProfiles}
             />
-          </label>
+          }
+        />
 
-          <button className="filters__reset" onClick={handleReset}>
-            Reset
-          </button>
-        </div>
+        {/* Add Profile page (renders AddProfileForm) */}
+        <Route
+          path="/add"
+          element={
+            <AddProfilePage
+              mode={mode}
+              profiles={profiles}
+              onAddProfile={handleAddProfile}
+            />
+          }
+        />
 
-        <p className="results">
-          Showing <strong>{visibleProfiles.length}</strong> of{" "}
-          <strong>{profiles.length}</strong>
-        </p>
+        {/* Local profiles list with filters */}
+        <Route
+          path="/profiles"
+          element={
+            <OtherProfilesPage
+              mode={mode}
+              profiles={profiles}
+              visibleProfiles={visibleProfiles}
+              roleFilter={roleFilter}
+              setRoleFilter={setRoleFilter}
+              search={search}
+              setSearch={setSearch}
+              roleOptions={roleOptions}
+              onReset={handleReset}
+            />
+          }
+        />
 
-        {/* cards rendered with map + props */}
-        <div className="cards__grid">
-          {visibleProfiles.map((p) => (
-            <Card key={p.id} {...p} mode={mode} />
-          ))}
-        </div>
-      </Section>
+        {/* About */}
+        <Route path="/about" element={<AboutPage mode={mode} />} />
+
+        {/* Catch-all Not Found */}
+        <Route path="*" element={<NotFoundPage mode={mode} />} />
+      </Routes>
     </div>
   );
 }
