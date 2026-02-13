@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
-// Layout / Nav
 import Nav from "./components/Nav";
 
 // Pages
@@ -10,6 +9,10 @@ import AddProfilePage from "./pages/AddProfilePage";
 import OtherProfilesPage from "./pages/OtherProfilesPage";
 import AboutPage from "./pages/AboutPage";
 import NotFoundPage from "./pages/NotFoundPage";
+
+// NEW (Lab 10)
+import ProfileLayout from "./pages/ProfileLayout";
+import ProfileDetailPage from "./pages/ProfileDetailPage";
 
 // imgs
 import p1 from "./assets/p1.jpg";
@@ -118,7 +121,7 @@ export default function App() {
   const [roleFilter, setRoleFilter] = useState("All");
   const [search, setSearch] = useState("");
 
-  // lab 7: add profile handler (used by AddProfileForm on /add)
+  // lab 7: add profile handler
   const handleAddProfile = (newProfile) => {
     setProfiles((prev) => [...prev, newProfile]);
   };
@@ -148,17 +151,13 @@ export default function App() {
 
   return (
     <div className={`page ${mode}`}>
-      {/* Nav always visible */}
       <Nav mode={mode} />
 
-      {/* Mode toggle always visible */}
       <button className="modeToggle" onClick={toggleMode}>
         Switch to {mode === "light" ? "Dark" : "Light"} Mode
       </button>
 
-      {/* Routes */}
       <Routes>
-        {/* Home */}
         <Route
           path="/"
           element={
@@ -170,7 +169,6 @@ export default function App() {
           }
         />
 
-        {/* Add Profile page (renders AddProfileForm) */}
         <Route
           path="/add"
           element={
@@ -182,7 +180,6 @@ export default function App() {
           }
         />
 
-        {/* Local profiles list with filters */}
         <Route
           path="/profiles"
           element={
@@ -200,10 +197,13 @@ export default function App() {
           }
         />
 
-        {/* About */}
         <Route path="/about" element={<AboutPage mode={mode} />} />
 
-        {/* Catch-all Not Found */}
+        {/* Lab 10 Nested + Dynamic Route */}
+        <Route path="/profile" element={<ProfileLayout mode={mode} />}>
+          <Route path=":id" element={<ProfileDetailPage mode={mode} />} />
+        </Route>
+
         <Route path="*" element={<NotFoundPage mode={mode} />} />
       </Routes>
     </div>

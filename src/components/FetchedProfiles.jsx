@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Card from "./Card";
 import Section from "./section";
+import { Link } from "react-router-dom";
 
 export default function FetchedProfiles({ mode }) {
   const [titles, setTitles] = useState(["All"]);
@@ -218,8 +219,14 @@ export default function FetchedProfiles({ mode }) {
 
       <div className="cards__grid">
         {mappedCards.map((p) => (
-          <Card key={p.id} {...p} mode={mode} />
-        ))}
+        <div key={p.id}>
+          <Card {...p} mode={mode} />
+          <Link to={`/profile/${p.id}`} state={{ profile: p }}>
+            View Details
+          </Link>
+        </div>
+))}
+
       </div>
     </Section>
   );
