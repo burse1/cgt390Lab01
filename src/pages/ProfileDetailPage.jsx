@@ -72,10 +72,10 @@ export default function ProfileDetailPage({ mode }) {
 
   return (
     <div>
-      {/* Reuse your Card UI */}
+      {/* Reuse Card UI */}
       <Card {...profile} mode={mode} />
 
-      {/* Extra details if you want */}
+      {/* Extra details */}
       {profile.bio && (
         <p style={{ marginTop: 12, lineHeight: 1.5 }}>{profile.bio}</p>
       )}
