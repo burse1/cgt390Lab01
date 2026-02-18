@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import Section from "../components/section";
 import AddProfileForm from "../components/AddProfileForm";
+import { useProfiles } from "../context/ProfilesContext";
 
-export default function AddProfilePage({ mode, profiles, onAddProfile }) {
+export default function AddProfilePage() {
   const navigate = useNavigate();
+  const { profiles, addProfile } = useProfiles();
 
   const handleAddAndRedirect = (newProfile) => {
-    onAddProfile(newProfile);
-    // requirement: redirect to homepage after successful submit
+    addProfile(newProfile);
     navigate("/", { replace: true });
   };
 
@@ -16,7 +17,6 @@ export default function AddProfilePage({ mode, profiles, onAddProfile }) {
       <AddProfileForm
         existingProfiles={profiles}
         onAddProfile={handleAddAndRedirect}
-        mode={mode}
       />
     </Section>
   );

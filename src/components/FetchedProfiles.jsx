@@ -1,140 +1,32 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Card from "./Card";
 import Section from "./section";
-import { Link } from "react-router-dom";
+import { useMode } from "../context/ModeContext";
+import { useFetchedProfiles } from "../context/FetchedProfilesContext";
 
-export default function FetchedProfiles({ mode }) {
-  const [titles, setTitles] = useState(["All"]);
-  const [titleFilter, setTitleFilter] = useState("All");
-  const [nameSearch, setNameSearch] = useState("");
+export default function FetchedProfiles() {
+  const { mode } = useMode();
 
-  const [page, setPage] = useState(1);
-  const limit = 10;
+  const {
+    titles,
+    loadingTitles,
 
-  const [rows, setRows] = useState([]);
-  const [loadingTitles, setLoadingTitles] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
-  const [error, setError] = useState("");
+    titleFilter,
+    setTitleFilter,
+    nameSearch,
+    setNameSearch,
 
-  // --- Fetch titles once on mount ---
-  useEffect(() => {
-    const controller = new AbortController();
+    page,
+    setPage,
+    limit,
+    canGoPrev,
+    canGoNext,
 
-    const run = async () => {
-      try {
-        setLoadingTitles(true);
-        setError("");
-
-        const res = await fetch(
-          "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php",
-          { signal: controller.signal }
-        );
-        if (!res.ok) throw new Error("Failed to load titles");
-        const data = await res.json();
-
-        // IMPORTANT: do NOT trim titles (API may contain trailing spaces like "Designer ")
-        const rawTitles = Array.isArray(data.titles) ? data.titles : [];
-        const deduped = Array.from(new Set(rawTitles.map((t) => String(t)))).filter(
-          (t) => t.length > 0
-        );
-
-        deduped.sort((a, b) => a.localeCompare(b));
-        setTitles(["All", ...deduped]);
-      } catch (e) {
-        if (e.name !== "AbortError") setError("Could not load titles.");
-      } finally {
-        setLoadingTitles(false);
-      }
-    };
-
-    run();
-    return () => controller.abort();
-  }, []);
-
-  // reset to page 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [titleFilter, nameSearch]);
-
-  // --- Fetch data whenever filters/page change ---
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const run = async () => {
-      try {
-        setLoadingData(true);
-        setError("");
-
-        const nameParam = nameSearch.trim();
-
-        const useFetchAll = titleFilter === "All" && nameParam === "";
-
-        if (useFetchAll) {
-          const url = "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data.php";
-          const res = await fetch(url, { signal: controller.signal });
-          if (!res.ok) throw new Error("Failed to load profiles");
-          const data = await res.json();
-
-          const arr = Array.isArray(data) ? data : [];
-          const start = (page - 1) * limit;
-          setRows(arr.slice(start, start + limit));
-          return;
-        }
-
-        // Otherwise use the filtered endpoint
-        const base =
-          "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php";
-
-        const tryFetch = async (titleValue) => {
-          const url =
-            base +
-            `?title=${encodeURIComponent(titleValue)}` +
-            `&name=${encodeURIComponent(nameParam)}` +
-            `&page=${encodeURIComponent(page)}` +
-            `&limit=${encodeURIComponent(limit)}`;
-
-          const res = await fetch(url, { signal: controller.signal });
-          if (!res.ok) throw new Error("Failed to load profiles");
-          const data = await res.json();
-
-          const list = Array.isArray(data)
-  ? data
-  : Array.isArray(data.profiles)
-  ? data.profiles
-  : Array.isArray(data.data)
-  ? data.data
-  : [];
-
-
-          return list;
-        };
-
-    
-        const titleCandidates =
-          titleFilter === "All"
-            ? ["All", ""]
-            : [titleFilter, titleFilter.trim()];
-
-        let list = [];
-        for (const t of titleCandidates) {
-          list = await tryFetch(t);
-          if (list.length > 0) break;
-        }
-
-        setRows(list);
-      } catch (e) {
-        if (e.name !== "AbortError") setError("Could not load profiles.");
-      } finally {
-        setLoadingData(false);
-      }
-    };
-
-    run();
-    return () => controller.abort();
-  }, [titleFilter, nameSearch, page]);
-
-  const canGoPrev = page > 1;
-  const canGoNext = rows.length === limit; // heuristic
+    rows,
+    loadingData,
+    error,
+    reset,
+  } = useFetchedProfiles();
 
   const mappedCards = useMemo(() => {
     return rows.map((r) => ({
@@ -151,7 +43,7 @@ export default function FetchedProfiles({ mode }) {
   }, [rows]);
 
   return (
-    <Section title="Fetched Profiles (Lab 8)">
+    <Section title="Fetched Profiles (API)">
       <div className="filters">
         <label className="filters__item">
           <span className="filters__label">Filter by title (API)</span>
@@ -180,15 +72,7 @@ export default function FetchedProfiles({ mode }) {
           />
         </label>
 
-        <button
-          className="filters__reset"
-          type="button"
-          onClick={() => {
-            setTitleFilter("All");
-            setNameSearch("");
-            setPage(1);
-          }}
-        >
+        <button className="filters__reset" type="button" onClick={reset}>
           Reset
         </button>
       </div>
@@ -219,14 +103,8 @@ export default function FetchedProfiles({ mode }) {
 
       <div className="cards__grid">
         {mappedCards.map((p) => (
-        <div key={p.id}>
-          <Card {...p} mode={mode} />
-          <Link to={`/profile/${p.id}`} state={{ profile: p }}>
-            View Details
-          </Link>
-        </div>
-))}
-
+          <Card key={p.id} {...p} mode={mode} />
+        ))}
       </div>
     </Section>
   );
