@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
 
 const FetchedProfilesContext = createContext(null);
 
@@ -7,30 +7,80 @@ const ALL_URL = "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data.php";
 const FILTER_URL =
   "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php";
 
+const LIMIT = 10;
+
+const initialState = {
+  // titles
+  titles: ["All"],
+  loadingTitles: false,
+
+  // filters
+  titleFilter: "All",
+  nameSearch: "",
+
+  // paging
+  page: 1,
+  limit: LIMIT,
+  totalCount: 0,
+
+  // data
+  rows: [],
+  loadingData: false,
+  error: "",
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "TITLES_LOADING":
+      return { ...state, loadingTitles: true, error: "" };
+
+    case "TITLES_SUCCESS":
+      return { ...state, loadingTitles: false, titles: action.payload };
+
+    case "TITLES_ERROR":
+      return { ...state, loadingTitles: false, error: action.payload || "Could not load titles." };
+
+    case "SET_TITLE_FILTER":
+      return { ...state, titleFilter: action.payload, page: 1 };
+
+    case "SET_NAME_SEARCH":
+      return { ...state, nameSearch: action.payload, page: 1 };
+
+    case "SET_PAGE":
+      return { ...state, page: action.payload };
+
+    case "RESET_FILTERS":
+      return { ...state, titleFilter: "All", nameSearch: "", page: 1 };
+
+    case "DATA_LOADING":
+      return { ...state, loadingData: true, error: "" };
+
+    case "DATA_SUCCESS":
+      return {
+        ...state,
+        loadingData: false,
+        rows: action.payload.rows,
+        totalCount: action.payload.totalCount,
+      };
+
+    case "DATA_ERROR":
+      return { ...state, loadingData: false, error: action.payload || "Could not load profiles." };
+
+    default:
+      return state;
+  }
+}
+
 export function FetchedProfilesProvider({ children }) {
-  const [titles, setTitles] = useState(["All"]);
-  const [loadingTitles, setLoadingTitles] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const [titleFilter, setTitleFilter] = useState("All");
-  const [nameSearch, setNameSearch] = useState("");
-
-  const [page, setPage] = useState(1);
-  const limit = 10;
-
-  const [rows, setRows] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-
-  const [loadingData, setLoadingData] = useState(false);
-  const [error, setError] = useState("");
-
-  // fetch titles once
+  // Fetch titles once
   useEffect(() => {
     const controller = new AbortController();
 
     async function run() {
       try {
-        setLoadingTitles(true);
-        setError("");
+        dispatch({ type: "TITLES_LOADING" });
 
         const res = await fetch(TITLES_URL, { signal: controller.signal });
         if (!res.ok) throw new Error("Failed to load titles");
@@ -43,11 +93,11 @@ export function FetchedProfilesProvider({ children }) {
         );
         deduped.sort((a, b) => a.localeCompare(b));
 
-        setTitles(["All", ...deduped]);
+        dispatch({ type: "TITLES_SUCCESS", payload: ["All", ...deduped] });
       } catch (e) {
-        if (e.name !== "AbortError") setError("Could not load titles.");
-      } finally {
-        setLoadingTitles(false);
+        if (e.name !== "AbortError") {
+          dispatch({ type: "TITLES_ERROR", payload: "Could not load titles." });
+        }
       }
     }
 
@@ -55,22 +105,16 @@ export function FetchedProfilesProvider({ children }) {
     return () => controller.abort();
   }, []);
 
-  // reset to page 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [titleFilter, nameSearch]);
-
-  // fetch data when filters/page changes
+  // Fetch data whenever filters/page change
   useEffect(() => {
     const controller = new AbortController();
 
     async function run() {
       try {
-        setLoadingData(true);
-        setError("");
+        dispatch({ type: "DATA_LOADING" });
 
-        const nameParam = nameSearch.trim();
-        const useFetchAll = titleFilter === "All" && nameParam === "";
+        const nameParam = state.nameSearch.trim();
+        const useFetchAll = state.titleFilter === "All" && nameParam === "";
 
         if (useFetchAll) {
           const res = await fetch(ALL_URL, { signal: controller.signal });
@@ -78,19 +122,24 @@ export function FetchedProfilesProvider({ children }) {
           const data = await res.json();
 
           const arr = Array.isArray(data) ? data : [];
-          setTotalCount(arr.length);
+          const start = (state.page - 1) * state.limit;
 
-          const start = (page - 1) * limit;
-          setRows(arr.slice(start, start + limit));
+          dispatch({
+            type: "DATA_SUCCESS",
+            payload: {
+              rows: arr.slice(start, start + state.limit),
+              totalCount: arr.length,
+            },
+          });
           return;
         }
 
         const url =
           FILTER_URL +
-          `?title=${encodeURIComponent(titleFilter)}` +
+          `?title=${encodeURIComponent(state.titleFilter)}` +
           `&name=${encodeURIComponent(nameParam)}` +
-          `&page=${encodeURIComponent(page)}` +
-          `&limit=${encodeURIComponent(limit)}`;
+          `&page=${encodeURIComponent(state.page)}` +
+          `&limit=${encodeURIComponent(state.limit)}`;
 
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error("Failed to load profiles");
@@ -104,70 +153,34 @@ export function FetchedProfilesProvider({ children }) {
           ? data.data
           : [];
 
-        setTotalCount(Number(data?.count) || list.length);
-        setRows(list);
+        const totalCount = Number(data?.count) || list.length;
+
+        dispatch({
+          type: "DATA_SUCCESS",
+          payload: { rows: list, totalCount },
+        });
       } catch (e) {
-        if (e.name !== "AbortError") setError("Could not load profiles.");
-      } finally {
-        setLoadingData(false);
+        if (e.name !== "AbortError") {
+          dispatch({ type: "DATA_ERROR", payload: "Could not load profiles." });
+        }
       }
     }
 
     run();
     return () => controller.abort();
-  }, [titleFilter, nameSearch, page]);
+  }, [state.titleFilter, state.nameSearch, state.page, state.limit]);
 
-  const canGoPrev = page > 1;
-  const canGoNext = page * limit < totalCount;
-
-  const reset = () => {
-    setTitleFilter("All");
-    setNameSearch("");
-    setPage(1);
-  };
+  const canGoPrev = state.page > 1;
+  const canGoNext = state.page * state.limit < state.totalCount;
 
   const value = useMemo(
     () => ({
-      // titles
-      titles,
-      loadingTitles,
-
-      // filters
-      titleFilter,
-      setTitleFilter,
-      nameSearch,
-      setNameSearch,
-
-      // paging
-      page,
-      setPage,
-      limit,
-      totalCount,
+      state,
+      dispatch,
       canGoPrev,
       canGoNext,
-
-      // data
-      rows,
-      loadingData,
-      error,
-
-      // actions
-      reset,
     }),
-    [
-      titles,
-      loadingTitles,
-      titleFilter,
-      nameSearch,
-      page,
-      limit,
-      totalCount,
-      canGoPrev,
-      canGoNext,
-      rows,
-      loadingData,
-      error,
-    ]
+    [state, canGoPrev, canGoNext]
   );
 
   return (
@@ -179,10 +192,7 @@ export function FetchedProfilesProvider({ children }) {
 
 export function useFetchedProfiles() {
   const ctx = useContext(FetchedProfilesContext);
-  if (!ctx)
-    throw new Error(
-      "useFetchedProfiles must be used inside <FetchedProfilesProvider>"
-    );
+  if (!ctx) throw new Error("useFetchedProfiles must be used inside <FetchedProfilesProvider>");
   return ctx;
 }
 

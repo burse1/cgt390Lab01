@@ -1,35 +1,41 @@
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Card from "./Card";
 import Section from "./section";
-import { useMode } from "../context/ModeContext";
 import { useFetchedProfiles } from "../context/FetchedProfilesContext";
+import { useMode } from "../context/ModeContext";
 
 export default function FetchedProfiles() {
   const { mode } = useMode();
+  const { state, dispatch, canGoPrev, canGoNext } = useFetchedProfiles();
 
-  const {
-    titles,
-    loadingTitles,
+  //  useRef: access DOM input + focus it on reset
+  const nameInputRef = useRef(null);
 
-    titleFilter,
-    setTitleFilter,
-    nameSearch,
-    setNameSearch,
+  //  useLayoutEffect (next section): measure grid width before paint
+  const gridRef = useRef(null);
+  const [cols, setCols] = useState(3);
 
-    page,
-    setPage,
-    limit,
-    canGoPrev,
-    canGoNext,
+  useLayoutEffect(() => {
+    if (!gridRef.current) return;
 
-    rows,
-    loadingData,
-    error,
-    reset,
-  } = useFetchedProfiles();
+    const measure = () => {
+      const w = gridRef.current.getBoundingClientRect().width;
+      // pick a reasonable min card width; adjust if your cards are wider/narrower
+      const minCard = 260;
+      const nextCols = Math.max(1, Math.floor(w / minCard));
+      setCols(nextCols);
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(gridRef.current);
+
+    return () => ro.disconnect();
+  }, []);
 
   const mappedCards = useMemo(() => {
-    return rows.map((r) => ({
+    return state.rows.map((r) => ({
       id: Number(r.id) || r.id,
       name: r.name ?? "Unnamed",
       role: r.title ?? "Untitled",
@@ -40,7 +46,7 @@ export default function FetchedProfiles() {
       major: "Fetched",
       isFeatured: false,
     }));
-  }, [rows]);
+  }, [state.rows]);
 
   return (
     <Section title="Fetched Profiles (API)">
@@ -49,11 +55,13 @@ export default function FetchedProfiles() {
           <span className="filters__label">Filter by title (API)</span>
           <select
             className="filters__control"
-            value={titleFilter}
-            onChange={(e) => setTitleFilter(e.target.value)}
-            disabled={loadingTitles}
+            value={state.titleFilter}
+            onChange={(e) =>
+              dispatch({ type: "SET_TITLE_FILTER", payload: e.target.value })
+            }
+            disabled={state.loadingTitles}
           >
-            {titles.map((t) => (
+            {state.titles.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
@@ -64,15 +72,26 @@ export default function FetchedProfiles() {
         <label className="filters__item">
           <span className="filters__label">Search by name (API)</span>
           <input
+            ref={nameInputRef}
             className="filters__control"
             type="text"
             placeholder="Type a name…"
-            value={nameSearch}
-            onChange={(e) => setNameSearch(e.target.value)}
+            value={state.nameSearch}
+            onChange={(e) =>
+              dispatch({ type: "SET_NAME_SEARCH", payload: e.target.value })
+            }
           />
         </label>
 
-        <button className="filters__reset" type="button" onClick={reset}>
+        <button
+          className="filters__reset"
+          type="button"
+          onClick={() => {
+            dispatch({ type: "RESET_FILTERS" });
+            // focus input after reset
+            nameInputRef.current?.focus();
+          }}
+        >
           Reset
         </button>
       </div>
@@ -80,28 +99,33 @@ export default function FetchedProfiles() {
       <div className="pager">
         <button
           type="button"
-          onClick={() => setPage((p) => p - 1)}
-          disabled={!canGoPrev || loadingData}
+          onClick={() => dispatch({ type: "SET_PAGE", payload: state.page - 1 })}
+          disabled={!canGoPrev || state.loadingData}
         >
           Prev
         </button>
-        <span className="pager__text">Page {page}</span>
+        <span className="pager__text">Page {state.page}</span>
         <button
           type="button"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={!canGoNext || loadingData}
+          onClick={() => dispatch({ type: "SET_PAGE", payload: state.page + 1 })}
+          disabled={!canGoNext || state.loadingData}
         >
           Next
         </button>
       </div>
 
-      {error && <p className="apiError">{error}</p>}
-      {loadingData && <p className="apiHint">Loading…</p>}
-      {!loadingData && !error && mappedCards.length === 0 && (
+      {state.error && <p className="apiError">{state.error}</p>}
+      {state.loadingData && <p className="apiHint">Loading…</p>}
+      {!state.loadingData && !state.error && mappedCards.length === 0 && (
         <p className="apiHint">No results.</p>
       )}
 
-      <div className="cards__grid">
+      {/* useLayoutEffect result used here: dynamic columns */}
+      <div
+        ref={gridRef}
+        className="cards__grid"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
         {mappedCards.map((p) => (
           <Card key={p.id} {...p} mode={mode} />
         ))}
