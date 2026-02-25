@@ -1,0 +1,1 @@
+import{c as o,j as i,s}from"./index-4qYzG9A7.js";function a(){const t=o.c(1);let e;return t[0]===Symbol.for("react.memo_cache_sentinel")?(e=i.jsx(s,{title:"About",children:i.jsx("p",{children:"This is a Single Page Application using React Router. Links update the URL and swap components without reloading the page."})}),t[0]=e):e=t[0],e}export{a as default};
