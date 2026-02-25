@@ -1,34 +1,31 @@
-import styles from "./Card.module.css";
+import React from "react";
+import { useMode } from "../context/ModeContext";
 
-export default function Card({
+function Card({
   id,
   name,
   role,
   image,
+  bio,
+  email,
   year,
   major,
   isFeatured,
-  mode, 
 }) {
-  const modeClass = mode === "dark" ? styles.dark : styles.light;
+  const { mode } = useMode();
 
   return (
-    <article className={`${styles.card} ${modeClass}`}>
-      <img className={styles.image} src={image} alt={name} />
-
-      <div className={styles.content}>
-        <div className={styles.titleRow}>
-          <h3>{name}</h3>
-          <span>#{id}</span>
-        </div>
-
-        <p className={styles.role}>{role}</p>
-        <p>
-          {year} · {major}
-        </p>
-
-        {isFeatured && <p className={styles.badge}>Featured</p>}
-      </div>
-    </article>
+    <div className={`card ${mode} ${isFeatured ? "featured" : ""}`}>
+      {image && <img src={image} alt={name} />}
+      <h3>{name}</h3>
+      <p><strong>Role:</strong> {role}</p>
+      {year && <p><strong>Year:</strong> {year}</p>}
+      {major && <p><strong>Major:</strong> {major}</p>}
+      {bio && <p>{bio}</p>}
+      {email && <p>{email}</p>}
+    </div>
   );
 }
+
+//  prevents unnecessary re-renders
+export default React.memo(Card);

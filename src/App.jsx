@@ -1,25 +1,26 @@
-import { useMemo, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Nav from "./components/Nav";
 
 import HomePage from "./pages/HomePage";
-import AddProfilePage from "./pages/AddProfilePage";
 import OtherProfilesPage from "./pages/OtherProfilesPage";
-import AboutPage from "./pages/AboutPage";
-import NotFoundPage from "./pages/NotFoundPage";
-
 import ProfileLayout from "./pages/ProfileLayout";
-import ProfileDetailPage from "./pages/ProfileDetailPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 import { useMode } from "./context/ModeContext";
 import { useProfiles } from "./context/ProfilesContext";
+
+// lazy load non-critical routes/pages
+const AboutPage = React.lazy(() => import("./pages/AboutPage"));
+const AddProfilePage = React.lazy(() => import("./pages/AddProfilePage"));
+const ProfileDetailPage = React.lazy(() => import("./pages/ProfileDetailPage"));
 
 export default function App() {
   const { mode, toggleMode } = useMode();
   const { profiles } = useProfiles();
 
-  // keep filters LOCAL (good example for reflection)
+  // keep page-only filters local
   const [roleFilter, setRoleFilter] = useState("All");
   const [search, setSearch] = useState("");
 
@@ -31,7 +32,6 @@ export default function App() {
 
   const visibleProfiles = useMemo(() => {
     const s = search.trim().toLowerCase();
-
     return profiles.filter((p) => {
       const matchesRole = roleFilter === "All" ? true : p.role === roleFilter;
       const matchesSearch = s === "" ? true : p.name.toLowerCase().includes(s);
@@ -49,40 +49,43 @@ export default function App() {
       <Nav />
 
       <button className="modeToggle" onClick={toggleMode}>
-        Switch to {mode === "light" ? "Dark" : "Light"} Mode
+        Switch to {mode === "light" ? "Dark" : "light"} Mode
       </button>
 
-      <Routes>
-        <Route
-          path="/"
-          element={<HomePage visibleProfiles={visibleProfiles} />}
-        />
+      <Suspense fallback={<p style={{ padding: 12 }}>Loading…</p>}>
+        <Routes>
+          <Route
+            path="/"
+            element={<HomePage visibleProfiles={visibleProfiles} />}
+          />
 
-        <Route path="/add" element={<AddProfilePage />} />
+          <Route path="/add" element={<AddProfilePage />} />
 
-        <Route
-          path="/profiles"
-          element={
-            <OtherProfilesPage
-              visibleProfiles={visibleProfiles}
-              roleFilter={roleFilter}
-              setRoleFilter={setRoleFilter}
-              search={search}
-              setSearch={setSearch}
-              roleOptions={roleOptions}
-              onReset={handleReset}
-            />
-          }
-        />
+          <Route
+            path="/profiles"
+            element={
+              <OtherProfilesPage
+                visibleProfiles={visibleProfiles}
+                roleFilter={roleFilter}
+                setRoleFilter={setRoleFilter}
+                search={search}
+                setSearch={setSearch}
+                roleOptions={roleOptions}
+                onReset={handleReset}
+              />
+            }
+          />
 
-        <Route path="/about" element={<AboutPage />} />
+          <Route path="/about" element={<AboutPage />} />
 
-        <Route path="/profile" element={<ProfileLayout />}>
-          <Route path=":id" element={<ProfileDetailPage />} />
-        </Route>
+          {/* Lab 10 nested + dynamic */}
+          <Route path="/profile" element={<ProfileLayout />}>
+            <Route path=":id" element={<ProfileDetailPage />} />
+          </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }
