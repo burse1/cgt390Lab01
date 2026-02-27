@@ -1,13 +1,15 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 
-const FetchedProfilesContext = createContext(null);
-
+// API endpoints
 const TITLES_URL = "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php";
 const ALL_URL = "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data.php";
 const FILTER_URL =
   "https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php";
 
 const LIMIT = 10;
+
+const FetchedProfilesContext = createContext(null);
 
 const initialState = {
   // titles
@@ -38,7 +40,11 @@ function reducer(state, action) {
       return { ...state, loadingTitles: false, titles: action.payload };
 
     case "TITLES_ERROR":
-      return { ...state, loadingTitles: false, error: action.payload || "Could not load titles." };
+      return {
+        ...state,
+        loadingTitles: false,
+        error: action.payload || "Could not load titles.",
+      };
 
     case "SET_TITLE_FILTER":
       return { ...state, titleFilter: action.payload, page: 1 };
@@ -64,7 +70,11 @@ function reducer(state, action) {
       };
 
     case "DATA_ERROR":
-      return { ...state, loadingData: false, error: action.payload || "Could not load profiles." };
+      return {
+        ...state,
+        loadingData: false,
+        error: action.payload || "Could not load profiles.",
+      };
 
     default:
       return state;
@@ -74,7 +84,10 @@ function reducer(state, action) {
 export function FetchedProfilesProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Fetch titles once
+  // Lab 14: Debounce the name search so we don't fetch on every keystroke
+  const debouncedNameSearch = useDebouncedValue(state.nameSearch, 300);
+
+  // --- Fetch titles once on mount ---
   useEffect(() => {
     const controller = new AbortController();
 
@@ -86,11 +99,12 @@ export function FetchedProfilesProvider({ children }) {
         if (!res.ok) throw new Error("Failed to load titles");
         const data = await res.json();
 
-        // keep spaces (API includes trailing spaces)
+        // keep raw titles (API may include trailing spaces)
         const rawTitles = Array.isArray(data.titles) ? data.titles : [];
         const deduped = Array.from(new Set(rawTitles.map((t) => String(t)))).filter(
           (t) => t.length > 0
         );
+
         deduped.sort((a, b) => a.localeCompare(b));
 
         dispatch({ type: "TITLES_SUCCESS", payload: ["All", ...deduped] });
@@ -105,7 +119,7 @@ export function FetchedProfilesProvider({ children }) {
     return () => controller.abort();
   }, []);
 
-  // Fetch data whenever filters/page change
+  // --- Fetch data whenever filters/page change ---
   useEffect(() => {
     const controller = new AbortController();
 
@@ -113,9 +127,10 @@ export function FetchedProfilesProvider({ children }) {
       try {
         dispatch({ type: "DATA_LOADING" });
 
-        const nameParam = state.nameSearch.trim();
+        const nameParam = debouncedNameSearch.trim();
         const useFetchAll = state.titleFilter === "All" && nameParam === "";
 
+        // If no filters, fetch all and slice client-side (endpoint returns array)
         if (useFetchAll) {
           const res = await fetch(ALL_URL, { signal: controller.signal });
           if (!res.ok) throw new Error("Failed to load profiles");
@@ -134,6 +149,7 @@ export function FetchedProfilesProvider({ children }) {
           return;
         }
 
+        // Otherwise use filtered endpoint (returns object with profiles + count)
         const url =
           FILTER_URL +
           `?title=${encodeURIComponent(state.titleFilter)}` +
@@ -145,6 +161,7 @@ export function FetchedProfilesProvider({ children }) {
         if (!res.ok) throw new Error("Failed to load profiles");
         const data = await res.json();
 
+        //  KEY: filtered endpoint uses data.profiles
         const list = Array.isArray(data)
           ? data
           : Array.isArray(data.profiles)
@@ -168,7 +185,7 @@ export function FetchedProfilesProvider({ children }) {
 
     run();
     return () => controller.abort();
-  }, [state.titleFilter, state.nameSearch, state.page, state.limit]);
+  }, [state.titleFilter, debouncedNameSearch, state.page, state.limit]);
 
   const canGoPrev = state.page > 1;
   const canGoNext = state.page * state.limit < state.totalCount;
@@ -192,7 +209,9 @@ export function FetchedProfilesProvider({ children }) {
 
 export function useFetchedProfiles() {
   const ctx = useContext(FetchedProfilesContext);
-  if (!ctx) throw new Error("useFetchedProfiles must be used inside <FetchedProfilesProvider>");
+  if (!ctx) {
+    throw new Error("useFetchedProfiles must be used inside <FetchedProfilesProvider>");
+  }
   return ctx;
 }
 

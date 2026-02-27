@@ -1,12 +1,15 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo } from "react";
+import useLocalStorageState from "../hooks/useLocalStorageState";
 
 const ModeContext = createContext(null);
 
 export function ModeProvider({ children }) {
-  const [mode, setMode] = useState("light");
+  // mode persists after refresh
+  const [mode, setMode] = useLocalStorageState("mode", "light");
+
   const toggleMode = () => setMode((m) => (m === "light" ? "dark" : "light"));
 
-  const value = useMemo(() => ({ mode, setMode, toggleMode }), [mode]);
+  const value = useMemo(() => ({ mode, setMode, toggleMode }), [mode, setMode]);
 
   return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
 }
